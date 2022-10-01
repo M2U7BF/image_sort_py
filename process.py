@@ -1,4 +1,5 @@
 import os.path
+import re
 import time
 import traceback
 
@@ -26,12 +27,13 @@ class Process:
         self.driver.implicitly_wait(STANDBY_TIME)
 
         for file_name in self.file_names:
+
             # google画像検索にアクセス
             self.driver.get(WEBSITE_URL)
 
             # 画像アップロード
             try:
-                camera_button = self.driver.find_elements(By.CLASS_NAME, "nDcEnd")[0]
+                camera_button = self.driver.find_element(By.CLASS_NAME, "nDcEnd")
                 # クリック
                 camera_button.click()
             except:
@@ -64,37 +66,38 @@ class Process:
         driver = self.driver
         ## url入力欄の取得
         try:
-            url_input = driver.find_elements(By.CLASS_NAME, "cB9M7")[0]
+            url_input = driver.find_element(By.CLASS_NAME, "cB9M7")
             url_input.send_keys(file_url)
         except:
             print(ERROR_MSG)
             traceback.print_exc()
 
         try:
-            search_button = driver.find_elements(By.CLASS_NAME, "Qwbd3")[0]
+            search_button = driver.find_element(By.CLASS_NAME, "Qwbd3")
             search_button.click()
         except:
             print(ERROR_MSG)
             traceback.print_exc()
 
         try:
-            result_top_title = driver.find_elements(By.CLASS_NAME, "DeMn2d")[0].text
-            result_top_desc = driver.find_elements(By.CLASS_NAME, "XNTym")[0].text
-            self.rename(file_path, f"{result_top_title}({result_top_desc})")
+            result_top_title = driver.find_element(By.CLASS_NAME, "DeMn2d").text
+            result_top_desc = driver.find_element(By.CLASS_NAME, "XNTym").text
+            Process.rename(file_path, f"{result_top_title}\({result_top_desc}\)")
         except:
             try:
-                site_title = driver.find_elements(By.CLASS_NAME, "UAiK1e")[0].text
-            except:
-                print(ERROR_MSG)
-                traceback.print_exc()
-            try:
+                site_title = driver.find_element(By.CLASS_NAME, "UAiK1e").text
                 # 名前をカット
                 if len(site_title) > 20:
                     site_title=site_title[:20]
-                Process.rename(file_path, "file({site_title}~)")
+
+                site_title = re.sub(':', '', site_title) # コロンを除去
+                site_title = re.sub('|', '\|', site_title) # パイプをエスケープ
+                site_title = re.sub('/', '-', site_title) # スラッシュを変換
+                Process.rename(file_path, f"file\({site_title}~\)")
             except:
                 print(ERROR_MSG)
                 traceback.print_exc()
+                raise Exception
 
         time.sleep(STANDBY_TIME)
 
@@ -102,7 +105,8 @@ class Process:
     def rename(cls, file_path, new_name):
         # 拡張子を取得
         extention = os.path.splitext(file_path)[-1]
-        subprocess.run(f"mv {file_path} {new_name}{extention}", shell=True, capture_output=True, check=True)
+        subprocess.run(f"mv {file_path} \'{IMAGE_SOURCE_PATH}{new_name}{extention}\'", shell=True, capture_output=True, check=True)
+        print(f"SUCCESS : {new_name}{extention} {'¥'*5}")
 
     @classmethod
     def get_file_names(cls):
