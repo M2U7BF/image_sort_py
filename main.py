@@ -1,5 +1,6 @@
 from initial_process import app_initialization
-from process import scraping
+from process import Process
 
 # app_initialization()
-scraping()
+process = Process()
+process.scraping()
